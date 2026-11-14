@@ -44,3 +44,9 @@
 ```bash
 pip install docling faster-whisper whisperx google-generativeai pydantic
 ```
+
+
+## Dataset 
+Download the dataset here:
+[Google Drive Dataset](https://drive.google.com/drive/folders/17JuWLTBgzolWxFjpcurNfq7pymYRe14s?usp=drive_link)
+
