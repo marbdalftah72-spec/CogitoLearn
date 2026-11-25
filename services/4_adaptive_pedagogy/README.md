@@ -54,3 +54,75 @@
 pip install google-generativeai pydantic
 ```
 *(تم كتابة كود الـ BKT والـ FSRS كخوارزميات بايثون نقية وسريعة بدون اعتماديات خارجية ثقيلة).*
+
+---
+
+# 🚀 v2 — Advanced Professional Edition
+
+نسخة مطوّرة احترافية فوق v1: كل واجهات v1 العامة واختباراتها (19 اختبارًا) تعمل كما هي،
+وأُضيفت محركات جديدة برياضيات كاملة (لا اختصارات ولا stubs)، ليرتفع إجمالي الاختبارات إلى **105**.
+
+## 🧠 ما الجديد؟
+
+| المحرك | الجديد في v2 |
+|---|---|
+| **BKT Fitting** (`bkt_engine/bkt_fitter.py`) | تعلُّم معاملات BKT من البيانات نفسها: بحث شبكي + EM (Baum–Welch) لكل مفهوم، اضمحلال نسيان بين الجلسات (نصف عمر قابل للضبط)، وتقييم جودة التنبؤ (AUC / RMSE / Accuracy / Log-Loss) بتنبؤات خطوة-بخطوة |
+| **IRT Engine** (`irt_engine/irt_model.py`) — *جديد كليًا* | نموذج الاستجابة للمفردة ثنائي المعامل **2PL**: تقدير قدرة الطالب θ بطريقة الإمكان الأعظم (Newton–Raphson)، معايرة صعوبة وتمييز المفردات من مصفوفة إجابات، واختيار المفردة التالية بأعلى **معلومات فيشر** (اختبار تكيفي CAT) |
+| **FSRS-5** (`fsrs_scheduler/fsrs5_optimizer.py`) | ترقية كاملة لصيغ FSRS-5 الرسمية (17 وزنًا): منحنى استرجاعية `(1 + 19t/81S)^-0.5`، تحديث ثبات ما بعد الاسترجاع وما بعد التعثر، انعكاس متوسط للصعوبة، **حَلّال احتفاظ أمثل** بمحاكاة عبء المراجعة، و**توقّع عبء المراجعات** يومًا بيوم |
+| **Essay Evaluator v2** (`bloom_engine/essay_evaluator_v2.py`) | تصحيح حتمي متعدد المعايير: تغطية محتوى (TF-IDF cosine ضد الإجابة النموذجية)، بنية، أفعال بلوم المعرفية، تماسك — بأوزان معلنة في `config.py` |
+| **Item Analysis** (`bloom_engine/item_analysis.py`) | تحليل مفردات كلاسيكي: مؤشر صعوبة، تمييز (point-biserial)، كشف المشتتات غير الفعّالة، حكم جودة (RETAIN/REVISE/DISCARD)، وترتيب المشتتات بدرجة المعقولية |
+| **Misconception Library** (`misconception_analyzer/pattern_library.py` + `advanced_diagnoser.py`) | مكتبة 14 نمط خطأ معرفي موثّق (وصف، فئة، خطورة، مستوى بلوم علاجي، إجراء علاجي)، وتشخيصات **بدرجات ثقة** مبنية على التكرار والانتشار عبر المفاهيم، مع علامة «مستمر» للأنماط المتكررة |
+| **Learning Path** (`learning_path/path_planner.py`) — *جديد كليًا* | مخطّط جلسات على رسم المتطلبات السابقة (فرز طوبولوجي + كشف الحلقات): مراجعات FSRS المستحقة أولًا، ثم مفاهيم جديدة مفتوحة، مع بوابة إتقان تُعدَّل بقدرة الطالب θ |
+| **Coordinator v2** (`pedagogy_coordinator.py`) | طرق جديدة: `fit_bkt_parameters`، `estimate_student_ability`، `evaluate_essay_v2`، `plan_next_session`، و`get_unified_student_report` التي تدمج الإشارات الأربع (BKT + IRT + FSRS + التشخيصات) في تقرير واحد بتوصيات عربية |
+| **Config** (`config.py`) | كل الأوزان والعتبات في مكان واحد (`PedagogyConfig` قابلة للتحقق والتمرير للمحركات) |
+
+## 📂 خريطة المجلد بعد v2
+
+```
+4_adaptive_pedagogy/
+├── config.py                     # كل الثوابت والأوزان والعتبات
+├── bkt_engine/
+│   ├── bkt_updater.py            # (v1) تحديث BKT
+│   ├── bkt_fitter.py             # (v2) ملاءمة المعاملات + النسيان + تقييم التنبؤ
+│   └── student_state_store.py    # (v1) مخزن حالات الطلاب
+├── irt_engine/                   # (v2) محرك IRT 2PL كامل
+│   └── irt_model.py
+├── fsrs_scheduler/
+│   ├── memory_optimizer.py       # (v1) FSRS-4.5
+│   └── fsrs5_optimizer.py        # (v2) FSRS-5 + حلّال الاحتفاظ + توقّع العبء
+├── bloom_engine/
+│   ├── mcq_generator.py          # (v1) توليد MCQ
+│   ├── essay_evaluator.py        # (v1) تقييم مقالي (Gemini/قواعدي)
+│   ├── essay_evaluator_v2.py     # (v2) تقييم متعدد المعايير حتمي
+│   └── item_analysis.py          # (v2) تحليل مفردات ومعقولية مشتتات
+├── misconception_analyzer/
+│   ├── error_diagnoser.py        # (v1) التشخيص وخطط العلاج
+│   ├── pattern_library.py        # (v2) مكتبة 14 نمطًا
+│   └── advanced_diagnoser.py     # (v2) تشخيص بدرجات ثقة (يرث v1)
+├── learning_path/                # (v2) مخطّط مسار التعلم
+│   └── path_planner.py
+├── examples/
+│   └── demo.py                   # تشغيل تجريبي كامل بطالب افتراضي
+├── tests/                        # 105 اختبارات (19 من v1 + 86 جديدة)
+└── pedagogy_coordinator.py       # المنسق: واجهات v1 + طرق v2
+```
+
+## ▶️ التشغيل والاختبارات
+
+```bash
+# من جذر المستودع
+python -m venv .venv && .venv/bin/pip install "pydantic>=2.5" pytest
+
+# كل اختبارات Service 4 (105 اختبارات)
+.venv/bin/python -m pytest services/4_adaptive_pedagogy/tests -q
+
+# الديمو الشامل (طالب افتراضي من الطرف للطرف)
+.venv/bin/python services/4_adaptive_pedagogy/examples/demo.py
+```
+
+## 🔬 ملاحظات منهجية
+
+- **BKT-EM**: نموذج BKT سلسلة ماركوف خفية بطورين؛ خطوة التوقع تستخدم الترشيح الأمامي/الخلفي (Forward–Backward) وخطوة التعظيم بصيغ مغلقة للأربعة معاملات.
+- **IRT**: تُثبَّت قابلية التعرّف بتوحيد توزيع θ (متوسط 0، انحراف 1) بعد كل حقبة معايرة، وتُقيَّد `a ∈ [0.1, 3]` و`b ∈ [-4, 4]`.
+- **FSRS-5**: الأوزان الافتراضية الـ17 هي أوزان FSRS-5 المنشورة؛ يمكن تمرير أوزان مُلاءمة لكل مقرر عبر `FSRS5Scheduler(weights=...)`.
+- كل المحركات الجديدة **حتمية** (بذور عشوائية ثابتة عند الحاجة) ولا تتطلب أي خدمة خارجية أو مفتاح API.
